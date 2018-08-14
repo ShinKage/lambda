@@ -1,0 +1,111 @@
+\documentclass[a4paper]{scrreprt}
+
+\usepackage{inconsolata}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+
+\usepackage{lipsum}        
+\usepackage[colorlinks]{hyperref}
+\usepackage{backref}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{ebproof}
+\usepackage{xfrac}
+
+\usepackage{listings}
+
+\usepackage{booktabs}
+\usepackage{tabularx}
+
+\usepackage[eulermath,beramono,pdfspacing,listings]{classicthesis}
+\usepackage{arsclassica}
+\usepackage{microtype}
+
+\lstset{language=Java,
+    keywordstyle=\color{RoyalBlue},
+    basicstyle=\small\ttfamily,
+    commentstyle=\color{Emerald}\ttfamily,
+    stringstyle=\rmfamily,
+    numberstyle=\scriptsize,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    flexiblecolumns=true,
+    escapeinside={£*}{*£},
+    firstnumber=last,
+}
+
+\newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
+\newcommand{\omissis}{[\textellipsis\unkern]}
+\DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
+\DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+
+\begin{document}
+
+\author{Giuseppe \and Lomurno}
+\title{Relazione}
+\maketitle
+
+\section{Typing rules}
+\begin{prooftree}
+  \infer0[IntE]{\Gamma \vdash \mathbb{Z} : \text{LInt}}
+\end{prooftree}
+\begin{prooftree}
+  \infer0[BoolE]{\Gamma \vdash \mathbb{B} : \text{LBool}}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{x : \tau \in \Gamma}
+  \infer1[Var]{\Gamma \vdash x : \tau}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma,x : \tau_1 \vdash e : \tau_2}
+  \infer1[Lambda]{\Gamma \vdash \lambda x : \tau_1. e : \tau_1 \rightarrow \tau_2}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma \vdash e_1 : \tau_1 \rightarrow \tau_2}
+  \hypo{\Gamma \vdash e_2 : \tau_1}
+  \infer2[App]{\Gamma \vdash e_1 e_2 : \tau_2}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma \vdash e_1 : \tau_1}
+  \hypo{\Gamma \vdash e_2 : \tau_1}
+  \infer2[PrimBinOp]{\Gamma \vdash e_1 \text{ op } e_2 : \text{result(op)}}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma \vdash e : \tau}
+  \infer1[PrimOp]{\Gamma \vdash \text{op } e : \text{result(op)}}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma \vdash c : \text{LBool}}
+  \hypo{\Gamma \vdash e_1 : \tau}
+  \hypo{\Gamma \vdash e_2 : \tau}
+  \infer3[Cond]{\Gamma \vdash \text{if } c \text{ then } e_1 \text{ else } e_2 : \tau}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{\Gamma \vdash e : \tau \rightarrow \tau}
+  \infer1[Fix]{\Gamma \vdash \text{fix } e : \tau}
+\end{prooftree}
+
+\section{Big-step semantics}
+\begin{prooftree}
+  \infer0[IntE/BoolE]{v \Rightarrow v}
+\end{prooftree}
+\begin{prooftree}
+  \hypo{e_1 \Rightarrow \lambda x : \tau. e}
+  \hypo{e_2 \Rightarrow v_2}
+  \hypo{e_1[\sfrac{v_2}{e_1}] \Rightarrow v}
+  \infer3[App]{e_1 e_2 \Rightarrow v}
+\end{prooftree}
+
+% Bibliografia
+\begin{thebibliography}{9}
+    \bibitem{pantieri:arte}
+        Pantieri, Lorenzo e Tommaso Gordino (2017),
+        \emph{L'arte di scrivere con \LaTeX},
+        \url{http://www.lorenzopantieri.net/LaTeX_files/ArteLaTeX.pdf}.
+\end{thebibliography}
+
+\end{document}
