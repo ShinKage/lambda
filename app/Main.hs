@@ -48,3 +48,9 @@ fibonacci = Fix fib
                     )
                   )
                 ))
+
+negFst :: SingI s => AST VNil (LFun (LPair LInt s) LInt)
+negFst = Lambda sing (PrimOp PrimNeg (PrimOp PrimFst (Var EZero)))
+
+test :: AST VNil LInt
+test = letE (IntE 5) (PrimBinOp (Var EZero) PrimMul (IntE 2))

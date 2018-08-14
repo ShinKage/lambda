@@ -14,24 +14,31 @@ import Data.Text.Prettyprint.Doc
 
 import Language.Lambda.Types
 --import Language.Lambda.Data.Nat
---import Language.Lambda.Data.Singletons
+import Language.Lambda.Data.Singletons
 import Language.Lambda.Data.Vec
 
 data AST :: forall n. Vec LType n -> LType -> Type where
-  IntE :: Int -> AST env LInt
-  BoolE :: Bool -> AST env LBool
-  Lambda :: SLType arg -> AST (arg :> env) res -> AST env (LFun arg res)
-  Var :: Elem env ty -> AST env ty
-  App :: AST env (LFun arg res) -> AST env arg -> AST env res
-  Fix :: AST env (LFun ty ty) -> AST env ty
-  Cond :: AST env LBool -> AST env ty -> AST env ty -> AST env ty
+  IntE      :: Int -> AST env LInt
+  BoolE     :: Bool -> AST env LBool
+  Lambda    :: SLType arg -> AST (arg :> env) res -> AST env (LFun arg res)
+  Var       :: Elem env ty -> AST env ty
+  App       :: AST env (LFun arg res) -> AST env arg -> AST env res
+  Fix       :: AST env (LFun ty ty) -> AST env ty
+  Cond      :: AST env LBool -> AST env ty -> AST env ty -> AST env ty
   PrimBinOp :: AST env arg -> BinOp arg res -> AST env arg -> AST env res
-  PrimOp :: Op arg res -> AST env arg -> AST env res
+  PrimOp    :: Op arg res -> AST env arg -> AST env res
+  Pair      :: AST env ty1 -> AST env ty2 -> AST env (LPair ty1 ty2)
 
 deriving instance Show (AST env ty)
 
 instance Pretty (AST VNil ty) where
   pretty = prettyAST_
+
+letE :: SingI arg => AST env arg -> AST (arg :> env) res -> AST env res
+letE e1 e2 = App (Lambda sing e2) e1
+
+letrecE :: SingI arg => AST (arg :> env) arg -> AST (arg :> env) res -> AST env res
+letrecE e1 e2 = App (Lambda sing e2) (Fix (Lambda sing e1))
 
 {-prettyAST :: forall (n :: Nat) (ty :: LType) (env :: Vec LType n) ann. SingI n => AST env ty -> Doc ann
 prettyAST (IntE n) = pretty n
@@ -81,3 +88,4 @@ prettyAST_ e = snd (go 0 e)
                   ])
     go i (PrimBinOp e1 op e2) = (i, parens $ snd (go i e1) <+> pretty op <+> snd (go i e2))
     go i (PrimOp op arg) = (i, parens $ pretty op <> snd (go i arg))
+    go i (Pair f s) = (i, angles $ snd (go i f) <> comma <> snd (go i s))

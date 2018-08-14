@@ -14,37 +14,41 @@ import Language.Lambda.Types
 import Language.Lambda.Data.Vec
 
 type family Concrete (t :: LType) :: Type where
-  Concrete LInt = Int
-  Concrete LBool = Bool
+  Concrete LInt           = Int
+  Concrete LBool          = Bool
   Concrete (LFun arg res) = AST VNil arg -> AST VNil res
+  Concrete (LPair f s)    = (Concrete f, Concrete s)
 
 eval :: AST VNil a -> Concrete a
-eval (IntE i) = i
-eval (BoolE b) = b
-eval (Lambda _ body) = \arg -> subst arg body
-eval (Var v) = case v of {} -- impossible in a well formed expression
-eval (App body arg) = eval (eval body $ arg)
-eval (Fix body) = eval $ unfix body (eval body)
-eval (Cond c e1 e2) = if eval c then eval e1 else eval e2
+eval (IntE i)             = i
+eval (BoolE b)            = b
+eval (Lambda _ body)      = \arg -> subst arg body
+eval (Var v)              = case v of {} -- impossible in a well formed expression
+eval (App body arg)       = eval (eval body $ arg)
+eval (Fix body)           = eval $ unfix body (eval body)
+eval (Cond c e1 e2)       = if eval c then eval e1 else eval e2
 eval (PrimBinOp e1 op e2) = evalBinOp op (eval e1) (eval e2)
-eval (PrimOp op arg) = evalOp op (eval arg)
+eval (PrimOp op arg)      = evalOp op (eval arg)
+eval (Pair f s)           = (eval f, eval s)
 
 unfix :: AST VNil (LFun a a) -> Concrete (LFun a a) -> AST VNil a
 unfix lam v = v $ Fix lam
 
 evalBinOp :: BinOp a b -> Concrete a -> Concrete a -> Concrete b
-evalBinOp PrimAdd = (+)
-evalBinOp PrimSub = (-)
-evalBinOp PrimMul = (*)
-evalBinOp PrimDiv = div
-evalBinOp PrimIntEq = (==)
+evalBinOp PrimAdd    = (+)
+evalBinOp PrimSub    = (-)
+evalBinOp PrimMul    = (*)
+evalBinOp PrimDiv    = div
+evalBinOp PrimIntEq  = (==)
 evalBinOp PrimBoolEq = (==)
-evalBinOp PrimAnd = (&&)
-evalBinOp PrimOr = (||)
+evalBinOp PrimAnd    = (&&)
+evalBinOp PrimOr     = (||)
 
 evalOp :: Op a b -> Concrete a -> Concrete b
 evalOp PrimNeg = negate
 evalOp PrimNot = not
+evalOp PrimFst = fst
+evalOp PrimSnd = snd
 
 subst :: forall env sub res. AST env sub -> AST (sub :> env) res -> AST env res
 subst e = go LZero
@@ -61,6 +65,7 @@ subst e = go LZero
     go len (Cond c e1 e2)       = Cond (go len c) (go len e1) (go len e2) -- Check clause and exprs
     go len (PrimBinOp e1 op e2) = PrimBinOp (go len e1) op (go len e2) -- Check exprs
     go len (PrimOp op arg)      = PrimOp op (go len arg) -- Check arg
+    go len (Pair f s)           = Pair (go len f) (go len s) -- Check args
 
     substVar :: Length (locals :: Vec LType n)
              -> Elem (locals +++ sub :> env) t
@@ -92,6 +97,7 @@ shifts prefix = go LZero
     go len (Cond c e1 e2)         = Cond (go len c) (go len e1) (go len e2)
     go len (PrimBinOp lhs op rhs) = PrimBinOp (go len lhs) op (go len rhs)
     go len (PrimOp op arg)        = PrimOp op (go len arg)
+    go len (Pair f s)             = Pair (go len f) (go len s)
 
     shiftsVar :: Length (locals :: Vec LType n)
               -> Elem (locals +++ env) t
