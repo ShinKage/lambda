@@ -11,8 +11,10 @@ module Language.Lambda.AST where
 
 import Data.Kind
 import Data.Text.Prettyprint.Doc
+import Data.Text.Prettyprint.Doc.Symbols.Unicode
 
 import Language.Lambda.Types
+import Language.Lambda.Utils
 --import Language.Lambda.Data.Nat
 import Language.Lambda.Data.Singletons
 import Language.Lambda.Data.Vec
@@ -67,25 +69,31 @@ prettyLambda ty body = parens $ fillSep
   ]-}
 
 prettyAST_ :: AST env ty -> Doc ann
-prettyAST_ e = snd (go 0 e)
-  where
-    go :: Int -> AST env ty -> (Int, Doc ann)
-    go i (IntE n) = (i, pretty n)
-    go i (BoolE b) = (i, pretty b)
-    go i (Lambda ty body) = case go i body of
-      (j, doc) -> (i + 1, parens $ fillSep
-        [ pretty 'λ' <> pretty '#' <> pretty j <> pretty ':' <> pretty ty
-            <> pretty '.'
-        , doc
-        ])
-    go i (Var v) = (i, pretty '#' <> pretty (elemToInt v))
-    go i (App body arg) = (i, parens $ snd (go i body) <+> snd (go i arg))
-    go i (Fix body) = (i, pretty "fix" <+> snd (go i body))
-    go i (Cond c e1 e2) =
-      (i, fillSep [ pretty "if" <+> snd (go i c)
-                  , pretty "then" <+> snd (go i e1)
-                  , pretty "else" <+> snd (go i e2)
-                  ])
-    go i (PrimBinOp e1 op e2) = (i, parens $ snd (go i e1) <+> pretty op <+> snd (go i e2))
-    go i (PrimOp op arg) = (i, parens $ pretty op <> snd (go i arg))
-    go i (Pair f s) = (i, angles $ snd (go i f) <> comma <> snd (go i s))
+prettyAST_ e = snd (go 0 initPrec e)
+  where go :: Int -> Rational -> AST env ty -> (Int, Doc ann)
+        go i _ (IntE n)  = (i, pretty n)
+        go i _ (BoolE b) = (i, pretty b)
+        go i prec (Lambda ty body) = case go i initPrec body of
+          (i_body, doc_body) -> (i + 1, maybeParens (prec >= lambdaPrec) $
+            fillSep [ pretty 'λ' <> pretty '#' <> pretty i_body <> pretty ':'
+                                 <> pretty ty <> pretty '.'
+                    , doc_body
+                    ])
+        go i _ (Var v) = (i, pretty '#' <> pretty (elemToInt v))
+        go i prec (App body arg) = (i, maybeParens (prec >= appPrec) $
+          snd (go i appLeftPrec body) <+> snd (go i appRightPrec arg))
+        go i prec (Fix body) = (i, maybeParens (prec >= appPrec) $
+          pretty "fix" <+> snd (go i initPrec body))
+        go i prec (Cond c e1 e2) =
+          (i, maybeParens (prec >= ifPrec) $ fillSep
+            [ pretty "if" <+> snd (go i initPrec c)
+            , pretty "then" <+> snd (go i initPrec e1)
+            , pretty "else" <+> snd (go i initPrec e2)
+            ])
+        go i prec (PrimBinOp e1 op e2) = (i, maybeParens (prec >= binOpPrec op) $
+          snd (go i (binOpLeftPrec op) e1) <+> pretty op
+            <+> snd (go i (binOpRightPrec op) e2))
+        go i prec (PrimOp op arg) = (i, maybeParens (prec >= opPrec op) $
+          pretty op <> snd (go i (opPrecArg op) arg))
+        go i _ (Pair f s) = (i, sGuillemetsOut $
+          snd (go i initPrec f) <> comma <> snd (go i initPrec s))

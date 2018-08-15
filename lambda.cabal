@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 69202107a9af228ed89f87e8e47a19215f0c985bd86ab449583fdddc03bdd61c
+-- hash: 1f2be0d855b6c4371b12f83e58ec326dbc0b75d21840496fa182ec33f276d1a7
 
 name:           lambda
 version:        0.1.0.0
@@ -31,6 +31,7 @@ library
       Language.Lambda.Data.Vec
       Language.Lambda.Eval
       Language.Lambda.Types
+      Language.Lambda.Utils
   other-modules:
       Paths_lambda
   hs-source-dirs:

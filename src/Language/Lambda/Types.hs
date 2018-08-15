@@ -59,7 +59,7 @@ deriving instance Show (SLType t)
 
 instance Pretty (SLType t) where
   pretty SLInt           = pretty "int"
-  pretty SLBool          = pretty "boolean"
+  pretty SLBool          = pretty "bool"
   pretty (SLFun arg res) = pretty arg <+> pretty "->" <+> pretty res
   pretty (SLPair f s)    = pretty f <+> pretty '×' <+> pretty s
 
