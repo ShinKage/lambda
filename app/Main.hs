@@ -3,6 +3,9 @@
 
 module Main where
 
+import Data.List (intersperse)
+import Data.Text.Prettyprint.Doc (line, pretty, vsep)
+
 import Language.Lambda.AST
 import Language.Lambda.Eval
 import Language.Lambda.Types
@@ -10,7 +13,7 @@ import Language.Lambda.Data.Singletons
 import Language.Lambda.Data.Vec
 
 main :: IO ()
-main = putStrLn . show . eval $ App factorial (IntE 5)
+main = print . vsep . intersperse line . fmap pretty . stepDescent $ App factorial (IntE 5)
 
 factorial :: AST VNil (LFun LInt LInt)
 factorial = Fix fact

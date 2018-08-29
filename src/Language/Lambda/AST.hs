@@ -7,7 +7,25 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Language.Lambda.AST where
+-------------------------------------------------------------------------------
+-- |
+-- Module      : Language.Lambda.AST
+-- Description : Abstract syntax tree and relatives helper function
+-- Copyright   : (c) Giuseppe Lomurno, 2018
+-- License     : MIT
+-- Maintainer  : Giuseppe Lomurno <lomurno.giuseppe97@gmail.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-------------------------------------------------------------------------------
+
+module Language.Lambda.AST
+  ( -- * Types
+    AST(..)
+    -- * Helper functions
+  , letE
+  , letrecE
+  ) where
 
 import Data.Kind
 import Data.Text.Prettyprint.Doc
@@ -15,20 +33,33 @@ import Data.Text.Prettyprint.Doc.Symbols.Unicode
 
 import Language.Lambda.Types
 import Language.Lambda.Utils
---import Language.Lambda.Data.Nat
 import Language.Lambda.Data.Singletons
 import Language.Lambda.Data.Vec
 
+-- | The language Abstract Syntax Tree.
+-- Using the provided constructors leads only to well-formed expressions.
+-- Indexed by a list of binded types and the output type.
 data AST :: forall n. Vec LType n -> LType -> Type where
+  -- | An integer literal.
   IntE      :: Int -> AST env LInt
+  -- | A boolean literal.
   BoolE     :: Bool -> AST env LBool
+  -- | Lambda expressions with explicit type, can be inferred thanks to 'SingI'
+  -- instance.
   Lambda    :: SLType arg -> AST (arg :> env) res -> AST env (LFun arg res)
+  -- | Variable with De Brujin indexes.
   Var       :: Elem env ty -> AST env ty
+  -- | Lambda application.
   App       :: AST env (LFun arg res) -> AST env arg -> AST env res
+  -- | Fix operator, defines recursive functions.
   Fix       :: AST env (LFun ty ty) -> AST env ty
+  -- | Conditional expressions, all branches must have the same return type.
   Cond      :: AST env LBool -> AST env ty -> AST env ty -> AST env ty
+  -- | Primitives binary operations.
   PrimBinOp :: AST env arg -> BinOp arg res -> AST env arg -> AST env res
+  -- | Primitives unary operations.
   PrimOp    :: Op arg res -> AST env arg -> AST env res
+  -- | Build a pair of expressions.
   Pair      :: AST env ty1 -> AST env ty2 -> AST env (LPair ty1 ty2)
 
 deriving instance Show (AST env ty)
@@ -36,37 +67,13 @@ deriving instance Show (AST env ty)
 instance Pretty (AST VNil ty) where
   pretty = prettyAST_
 
+-- |Helper function that defines let expressions
 letE :: SingI arg => AST env arg -> AST (arg :> env) res -> AST env res
 letE e1 e2 = App (Lambda sing e2) e1
 
+-- |Helper function that defines recursive let expressions
 letrecE :: SingI arg => AST (arg :> env) arg -> AST (arg :> env) res -> AST env res
 letrecE e1 e2 = App (Lambda sing e2) (Fix (Lambda sing e1))
-
-{-prettyAST :: forall (n :: Nat) (ty :: LType) (env :: Vec LType n) ann. SingI n => AST env ty -> Doc ann
-prettyAST (IntE n) = pretty n
-prettyAST (BoolE b) = pretty b
-{-prettyAST (Lambda ty body) = parens $ fillSep
-  [ pretty 'λ' <> pretty '#' <> pretty ':' <> pretty ty <> pretty '.'
-  , pretty body
-  ]-}
-prettyAST (Lambda ty body) = prettyLambda ty body
-prettyAST (Var v) = pretty '#' <> pretty (elemToInt v)
-prettyAST (App body arg) = parens $ prettyAST body <+> prettyAST arg
-prettyAST (Fix body) = pretty "fix" <+> prettyAST body
-prettyAST (Cond c e1 e2) = fillSep [ pretty "if" <+> prettyAST c
-                                   , pretty "then" <+> prettyAST e1
-                                   , pretty "else" <+> prettyAST e2
-                                   ]
-prettyAST (PrimBinOp e1 op e2) = parens $ prettyAST e1 <+> pretty op <+> prettyAST e2
-prettyAST (PrimOp op arg) = parens $ pretty op <> prettyAST arg
-
-prettyLambda :: forall (n :: Nat) (arg :: LType) (env :: Vec LType n) res ann
-              . SingI n => SLType arg -> AST env res -> Doc ann
-prettyLambda ty body = parens $ fillSep
-  [ pretty 'λ' <> pretty '#' <> pretty (snatToInt (sing :: SNat n) - 1)
-      <> pretty ':' <> pretty ty <> pretty '.'
-  , prettyAST body
-  ]-}
 
 prettyAST_ :: AST env ty -> Doc ann
 prettyAST_ e = snd (go 0 initPrec e)

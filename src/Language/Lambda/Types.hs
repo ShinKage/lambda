@@ -1,18 +1,40 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Language.Lambda.Types where
+-------------------------------------------------------------------------------
+-- |
+-- Module      : Language.Lambda.Types
+-- Description : Lambda types
+-- Copyright   : (c) Giuseppe Lomurno, 2018
+-- License     : MIT
+-- Maintainer  : Giuseppe Lomurno <lomurno.giuseppe97@gmail.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-------------------------------------------------------------------------------
+
+module Language.Lambda.Types
+  ( -- * Types
+    LType(..)
+  , Op(..)
+  , BinOp(..)
+  , SLType(..)
+  ) where
 
 import Data.Kind
 import Data.Text.Prettyprint.Doc
 
 import Language.Lambda.Data.Singletons
 
+-- | Types of the Lambda language
 data LType = LInt | LBool | LFun LType LType | LPair LType LType
   deriving Show
 
+-- | Primitive unary operations, indexed by argument and result type.
 data Op :: LType -> LType -> Type where
   PrimNeg :: Op LInt        LInt
   PrimNot :: Op LBool       LBool
@@ -27,6 +49,8 @@ instance Pretty (Op arg res) where
   pretty PrimFst = pretty "fst "
   pretty PrimSnd = pretty "snd "
 
+-- | Primitive binary operations, indexed by argument and result type.
+-- They must have the same type for both arguments.
 data BinOp :: LType -> LType -> Type where
   PrimAdd    :: BinOp LInt  LInt
   PrimSub    :: BinOp LInt  LInt
@@ -49,6 +73,7 @@ instance Pretty (BinOp arg res) where
   pretty PrimAnd    = pretty '∧'
   pretty PrimOr     = pretty '∨'
 
+-- | Singletons for 'LType'
 data SLType :: LType -> Type where
   SLInt     :: SLType LInt
   SLBool    :: SLType LBool

@@ -1,6 +1,18 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ViewPatterns #-}
 
+-------------------------------------------------------------------------------
+-- |
+-- Module      : Language.Lambda.Utils
+-- Description : Utility functions.
+-- Copyright   : (c) Giuseppe Lomurno, 2018
+-- License     : MIT
+-- Maintainer  : Giuseppe Lomurno <lomurno.giuseppe97@gmail.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-------------------------------------------------------------------------------
+
 module Language.Lambda.Utils where
 
 import Data.Text.Prettyprint.Doc

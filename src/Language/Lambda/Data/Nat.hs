@@ -4,19 +4,34 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
+-------------------------------------------------------------------------------
+-- |
+-- Module      : Language.Lambda.Data.Nat
+-- Description : Peano natural numbers.
+-- Copyright   : (c) Giuseppe Lomurno, 2018
+-- License     : MIT
+-- Maintainer  : Giuseppe Lomurno <lomurno.giuseppe97@gmail.com>
+-- Stability   : experimental
+-- Portability : non-portable
+--
+-------------------------------------------------------------------------------
+
 module Language.Lambda.Data.Nat where
 
 import Data.Kind
 
 import Language.Lambda.Data.Singletons
 
+-- | Inductive definition of Peano natural numbers.
 data Nat = Zero | Succ Nat
   deriving Show
 
+-- | Type-level natural numbers addition.
 type family n + m where
   Zero   + m = m
   Succ n + m = Succ (n + m)
 
+-- | Singletons for 'Nat'
 data SNat :: Nat -> Type where
   SZero :: SNat Zero
   SSucc :: SNat n -> SNat (Succ n)
@@ -35,6 +50,7 @@ instance SingI Zero where
 instance SingI n => SingI (Succ n) where
   sing = SSucc sing
 
+-- | Converts 'Nat' singleton instance to an 'Int'
 snatToInt :: SNat n -> Int
 snatToInt SZero = 0
 snatToInt (SSucc n) = 1 + snatToInt n
