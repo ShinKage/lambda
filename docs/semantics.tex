@@ -5,7 +5,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[italian]{babel}
 
-\usepackage{lipsum}        
 \usepackage[colorlinks]{hyperref}
 \usepackage{backref}
 
@@ -24,7 +23,7 @@
 \usepackage{arsclassica}
 \usepackage{microtype}
 
-\lstset{language=Java,
+\lstset{language=Haskell,
     keywordstyle=\color{RoyalBlue},
     basicstyle=\small\ttfamily,
     commentstyle=\color{Emerald}\ttfamily,
@@ -38,74 +37,277 @@
     firstnumber=last,
 }
 
-\newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
-\newcommand{\omissis}{[\textellipsis\unkern]}
 \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
 \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
 
 \begin{document}
 
-\author{Giuseppe \and Lomurno}
-\title{Relazione}
+\author{Giuseppe Lomurno}
+\title{Lambda Semantics}
+\date{}
 \maketitle
 
-\section{Typing rules}
-\begin{prooftree}
-  \infer0[IntE]{\Gamma \vdash \mathbb{Z} : \text{LInt}}
-\end{prooftree}
-\begin{prooftree}
-  \infer0[BoolE]{\Gamma \vdash \mathbb{B} : \text{LBool}}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{x : \tau \in \Gamma}
-  \infer1[Var]{\Gamma \vdash x : \tau}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{\Gamma,x : \tau_1 \vdash e : \tau_2}
-  \infer1[Lambda]{\Gamma \vdash \lambda x : \tau_1. e : \tau_1 \rightarrow \tau_2}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{\Gamma \vdash e_1 : \tau_1 \rightarrow \tau_2}
-  \hypo{\Gamma \vdash e_2 : \tau_1}
-  \infer2[App]{\Gamma \vdash e_1 e_2 : \tau_2}
-\end{prooftree}
-\begin{prooftree}
+\chapter{Typing rules}
+\[
+  \begin{prooftree}[center=false]
+    \infer0[\textsc{IntE}]{\Gamma \vdash \mathbb{Z} : \text{\textbf{LInt}}}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}[center=false]
+    \infer0[\textsc{BoolE}]{\Gamma \vdash \mathbb{B} : \text{\textbf{LBool}}}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}[center=false]
+    \hypo{\Gamma \vdash e_1 : \tau_1}
+    \hypo{\Gamma \vdash e_2 : \tau_2}
+    \infer2[\textsc{Pair}]{\Gamma \vdash \langle e_1,e_2 \rangle : \text{\textbf{LPair} $\tau_1$ $\tau_2$}}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{x : \tau \in \Gamma}
+    \infer1[\textsc{Var}]{\Gamma \vdash x : \tau}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}
+    \hypo{\Gamma,x : \tau_1 \vdash e : \tau_2}
+    \infer1[\textsc{Lambda}]{\Gamma \vdash \mathbold{\lambda} x : \tau_1 \ldotp e : \tau_1 \to \tau_2}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{\Gamma \vdash e_1 : \tau_1 \to \tau_2}
+    \hypo{\Gamma \vdash e_2 : \tau_1}
+    \infer2[\textsc{App}]{\Gamma \vdash e_1\,e_2 : \tau_2}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}
+    \hypo{\Gamma \vdash e : \tau \rightarrow \tau}
+    \infer1[\textsc{Fix}]{\Gamma \vdash \text{\textbf{fix} } e : \tau}
+  \end{prooftree}
+\]
+\begin{prooftree*}
+  \hypo{\text{\textbf{binop}} : \tau_1 \to \tau_1 \to \tau_2}
   \hypo{\Gamma \vdash e_1 : \tau_1}
   \hypo{\Gamma \vdash e_2 : \tau_1}
-  \infer2[PrimBinOp]{\Gamma \vdash e_1 \text{ op } e_2 : \text{result(op)}}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{\Gamma \vdash e : \tau}
-  \infer1[PrimOp]{\Gamma \vdash \text{op } e : \text{result(op)}}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{\Gamma \vdash c : \text{LBool}}
+  \infer3[\textsc{PrimBinOp}]{\Gamma \vdash e_1 \text{ \textbf{binop} } e_2 : \tau_2}
+\end{prooftree*}
+\begin{prooftree*}
+  \hypo{\text{\textbf{op}} : \tau_1 \to \tau_2}
+  \hypo{\Gamma \vdash e : \tau_1}
+  \infer2[\textsc{PrimOp}]{\Gamma \vdash \text{\textbf{op} } e : \tau_2}
+\end{prooftree*}
+\begin{prooftree*}
+  \hypo{\Gamma \vdash c : \text{\textbf{LBool}}}
   \hypo{\Gamma \vdash e_1 : \tau}
   \hypo{\Gamma \vdash e_2 : \tau}
-  \infer3[Cond]{\Gamma \vdash \text{if } c \text{ then } e_1 \text{ else } e_2 : \tau}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{\Gamma \vdash e : \tau \rightarrow \tau}
-  \infer1[Fix]{\Gamma \vdash \text{fix } e : \tau}
-\end{prooftree}
+  \infer3[\textsc{Cond}]{\Gamma \vdash \text{\textbf{if} } c \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 : \tau}
+\end{prooftree*}
 
-\section{Big-step semantics}
-\begin{prooftree}
-  \infer0[IntE/BoolE]{v \Rightarrow v}
-\end{prooftree}
-\begin{prooftree}
-  \hypo{e_1 \Rightarrow \lambda x : \tau. e}
-  \hypo{e_2 \Rightarrow v_2}
-  \hypo{e_1[\sfrac{v_2}{e_1}] \Rightarrow v}
-  \infer3[App]{e_1 e_2 \Rightarrow v}
-\end{prooftree}
+\begin{table}[ht]
+  \centering
+  \begin{tabular}[t]{lcc}
+    binop      & $\tau_1$ & $\tau_2$ \\
+    \midrule
+    PrimAdd    & LInt     & LInt     \\
+    PrimSub    & LInt     & LInt     \\
+    PrimMul    & LInt     & LInt     \\
+    PrimDiv    & LInt     & LInt     \\
+    PrimIntEq  & LInt     & LBool    \\
+    PrimBoolEq & LBool    & LBool    \\
+    PrimAnd    & LBool    & LBool    \\
+    PrimOr     & LBool    & LBool    \\
+  \end{tabular}
+  \quad
+  \centering
+  \begin{tabular}[t]{lcc}
+    op      & $\tau_1$  & $\tau_2$ \\
+    \midrule
+    PrimNeg & LInt      & LInt     \\
+    PrimNot & LBool     & LBool    \\
+    PrimFst & LPair f s & f        \\
+    PrimSnd & LPair f s & s        \\
+  \end{tabular}
+\end{table}
 
-% Bibliografia
-\begin{thebibliography}{9}
-    \bibitem{pantieri:arte}
-        Pantieri, Lorenzo e Tommaso Gordino (2017),
-        \emph{L'arte di scrivere con \LaTeX},
-        \url{http://www.lorenzopantieri.net/LaTeX_files/ArteLaTeX.pdf}.
-\end{thebibliography}
+\chapter{Big-step semantics}
+\[
+  \begin{prooftree}
+    \infer0[\textsc{IntE}/\textsc{BoolE}]{v \Downarrow v}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}
+    \hypo{e_1 \Downarrow v_1}
+    \hypo{e_2 \Downarrow v_2}
+    \infer2[\textsc{Pair}]{\langle e_1,e_2 \rangle \Downarrow \langle v_1,v_2 \rangle}
+  \end{prooftree}
+\]
+\begin{prooftree*}
+  \infer0[\textsc{Lambda}]{e \Downarrow \mathbold{\lambda} x : \tau \ldotp e'}
+\end{prooftree*}
+\[
+  \begin{prooftree}[separation=1em]
+    \hypo{e_1 \Downarrow \mathbold{\lambda} x : \tau \ldotp e}
+    \hypo{e_2 \Downarrow v_2}
+    \hypo{e[\sfrac{v_2}{x}] \Downarrow v}
+    \infer3[\textsc{App}]{e_1\,e_2 \Downarrow v}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}[separation=1em]
+    \hypo{e \Downarrow \mathbold{\lambda} x : \tau \ldotp e'}
+    \hypo{e'[\sfrac{\text{\textbf{fix} } e}{x}] \Downarrow v}
+    \infer2[\textsc{Fix}]{\text{\textbf{fix} } e \Downarrow v}
+  \end{prooftree}
+\]
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow v_1}
+  \hypo{e_2 \Downarrow v_2}
+  \hypo{v_1 \text{ \textbf{binop} } v_2 \Downarrow v}
+  \infer3[\textsc{PrimBinOp}]{e_1 \text{ \textbf{binop} } e_2 \Downarrow v}
+\end{prooftree*}
+\begin{prooftree*}
+  \hypo{e \Downarrow v}
+  \hypo{\text{\textbf{op} } v \Downarrow v'}
+  \infer2[\textsc{PrimOp}]{\text{\textbf{op} } e \Downarrow v'}
+\end{prooftree*}
+\[
+  \begin{prooftree}
+    \hypo{c \Downarrow \text{\textbf{True}}}
+    \hypo{e_1 \Downarrow v}
+    \infer2[\textsc{CondTrue}]{\text{\textbf{if} } c \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \Downarrow v}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{c \Downarrow \text{\textbf{False}}}
+    \hypo{e_2 \Downarrow v}
+    \infer2[\textsc{CondFalse}]{\text{\textbf{if} } c \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \Downarrow v}
+  \end{prooftree}
+\]
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}[t]{lcc}
+    binop \\
+    \midrule
+    PrimAdd    & $+$            & $\mathbb{Z} \times \mathbb{Z} \to \mathbb{Z}$ \\
+    PrimSub    & $-$            & $\mathbb{Z} \times \mathbb{Z} \to \mathbb{Z}$ \\
+    PrimMul    & $*$            & $\mathbb{Z} \times \mathbb{Z} \to \mathbb{Z}$ \\
+    PrimDiv    & $/$            & $\mathbb{Z} \times \mathbb{Z} \to \mathbb{Z}$ \\
+    PrimIntEq  & $=_\mathbb{Z}$ & $\mathbb{Z} \times \mathbb{Z} \to \mathbb{B}$ \\
+    PrimBoolEq & $=_\mathbb{B}$ & $\mathbb{B} \times \mathbb{B} \to \mathbb{B}$ \\
+    PrimAnd    & $\land$        & $\mathbb{B} \times \mathbb{B} \to \mathbb{B}$ \\
+    PrimOr     & $\lor$         & $\mathbb{B} \times \mathbb{B} \to \mathbb{B}$ \\
+  \end{tabular}
+  \quad
+  \centering
+  \begin{tabular}[t]{lcc}
+    op \\
+    \midrule
+    PrimNeg & $-$    & $\mathbb{Z} \to \mathbb{Z}$      \\
+    PrimNot & $\neg$ & $\mathbb{B} \to \mathbb{B}$      \\
+    PrimFst & fst    & $\alpha \times \beta \to \alpha$ \\
+    PrimSnd & snd    & $\alpha \times \beta \to \beta$  \\
+  \end{tabular}
+\end{table}
+
+\chapter{Small-step semantics}
+\[
+  \begin{prooftree}[center=false]
+    \infer0[\textsc{IntE}/\textsc{BoolE}]{v \longrightarrow v}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}[center=false]
+    \infer0[\textsc{Lambda}]{e \longrightarrow \mathbold{\lambda} x : \tau \ldotp e'}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{e_1 \longrightarrow e'_1}
+    \infer1[\textsc{PairA1}]{\langle e_1,e_2 \rangle \longrightarrow \langle e'_1,e_2 \rangle}
+  \end{prooftree}
+  \qquad
+  \begin{prooftree}
+    \hypo{e_2 \longrightarrow e'_2}
+    \infer1[\textsc{PairA2}]{\langle e_1,e_2 \rangle \longrightarrow \langle e_1,e'_2 \rangle}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{e_1 \longrightarrow e'_1}
+    \infer1[\textsc{AppF}]{e_1\,e_2 \longrightarrow e'_1\,e_2}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{e_2 \longrightarrow e'_2}
+    \infer1[\textsc{AppV}]{(\mathbold{\lambda}x : \tau \ldotp e_1)\,e_2 \longrightarrow (\mathbold{\lambda}x : \tau \ldotp e_1)\,e'_2}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{e[\sfrac{v}{x}] \longrightarrow v'}
+    \infer1[\textsc{App}]{(\mathbold{\lambda}x : \tau \ldotp e)\,v \longrightarrow v'}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{e \longrightarrow e'}
+    \infer1[\textsc{FixF}]{\text{\textbf{fix }} e \longrightarrow \text{\textbf{fix }} e'}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{e[\sfrac{\text{\textbf{fix }} (\mathbold{\lambda}x : \tau \ldotp e)}{x}] \rightarrow e'}
+    \infer1[\textsc{FixV}]{\text{\textbf{fix }} (\mathbold{\lambda}x : \tau \ldotp e) \rightarrow e'}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{c \longrightarrow c'}
+    \infer1[\textsc{CondC}]{\text{\textbf{if} } c \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \longrightarrow \text{\textbf{if} } c' \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2}
+  \end{prooftree}
+\]
+\begin{prooftree*}
+  \hypo{e_1 \longrightarrow e'_1}
+  \infer1[\textsc{CondA1}]{\text{\textbf{if} } v \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \longrightarrow \text{\textbf{if} } v \text{ \textbf{then} } e'_1 \text{ \textbf{else} } e_2}
+\end{prooftree*}
+\begin{prooftree*}
+  \hypo{e_2 \longrightarrow e'_2}
+  \infer1[\textsc{CondA2}]{\text{\textbf{if} } v \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \longrightarrow {\text{\textbf{if} } v \text{ \textbf{then} } e_1 \text{ \textbf{else} } e'_2}}
+\end{prooftree*}
+\[
+  \begin{prooftree}
+    \hypo{v \longrightarrow \text{True}}
+    \infer1[\textsc{CondTrue}]{\text{\textbf{if} } v \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \longrightarrow e_1}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{v \longrightarrow \text{False}}
+    \infer1[\textsc{CondFalse}]{\text{\textbf{if} } v \text{ \textbf{then} } e_1 \text{ \textbf{else} } e_2 \longrightarrow e_2}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{e_1 \longrightarrow e'_1}
+    \infer1[\textsc{PrimBinOpA1}]{e_1 \text{ \textbf{binop} } e_2 \longrightarrow e'_1 \text{ \textbf{binop} } e_2}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \hypo{e_2 \longrightarrow e'_2}
+    \infer1[\textsc{PrimBinOpA1}]{e_1 \text{ \textbf{binop} } e_2 \longrightarrow e_1 \text{ \textbf{binop} } e'_2}
+  \end{prooftree}
+\]
+\[
+  \begin{prooftree}
+    \infer0[\textsc{PrimBinOp}]{v_1 \text { \textbf{binop} } v_2 \longrightarrow v}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \hypo{e \longrightarrow e'}
+    \infer1[\textsc{PrimOpA}]{\text{\textbf{op} } e \longrightarrow \text{\textbf{op} } e'}
+  \end{prooftree}
+  \quad
+  \begin{prooftree}
+    \infer0[\textsc{PrimOp}]{\text{\textbf{op} } v \longrightarrow v'}
+  \end{prooftree}
+\]
 
 \end{document}

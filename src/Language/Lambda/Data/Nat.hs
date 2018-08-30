@@ -22,6 +22,10 @@ import Data.Kind
 
 import Language.Lambda.Data.Singletons
 
+-------------------------------------------------------------------------------
+-- * Types
+-------------------------------------------------------------------------------
+
 -- | Inductive definition of Peano natural numbers.
 data Nat = Zero | Succ Nat
   deriving Show
@@ -30,6 +34,10 @@ data Nat = Zero | Succ Nat
 type family n + m where
   Zero   + m = m
   Succ n + m = Succ (n + m)
+
+-------------------------------------------------------------------------------
+-- * Singletons
+-------------------------------------------------------------------------------
 
 -- | Singletons for 'Nat'
 data SNat :: Nat -> Type where
@@ -49,6 +57,10 @@ instance SingI Zero where
 
 instance SingI n => SingI (Succ n) where
   sing = SSucc sing
+
+-------------------------------------------------------------------------------
+-- * Helper functions
+-------------------------------------------------------------------------------
 
 -- | Converts 'Nat' singleton instance to an 'Int'
 snatToInt :: SNat n -> Int

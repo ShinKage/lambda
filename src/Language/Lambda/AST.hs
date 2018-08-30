@@ -20,9 +20,7 @@
 -------------------------------------------------------------------------------
 
 module Language.Lambda.AST
-  ( -- * Types
-    AST(..)
-    -- * Helper functions
+  ( AST(..)
   , letE
   , letrecE
   ) where
@@ -35,6 +33,10 @@ import Language.Lambda.Types
 import Language.Lambda.Utils
 import Language.Lambda.Data.Singletons
 import Language.Lambda.Data.Vec
+
+-------------------------------------------------------------------------------
+-- * Abstract Syntax Tree
+-------------------------------------------------------------------------------
 
 -- | The language Abstract Syntax Tree.
 -- Using the provided constructors leads only to well-formed expressions.
@@ -67,16 +69,8 @@ deriving instance Show (AST env ty)
 instance Pretty (AST VNil ty) where
   pretty = prettyAST_
 
--- |Helper function that defines let expressions
-letE :: SingI arg => AST env arg -> AST (arg :> env) res -> AST env res
-letE e1 e2 = App (Lambda sing e2) e1
-
--- |Helper function that defines recursive let expressions
-letrecE :: SingI arg => AST (arg :> env) arg -> AST (arg :> env) res -> AST env res
-letrecE e1 e2 = App (Lambda sing e2) (Fix (Lambda sing e1))
-
 prettyAST_ :: AST env ty -> Doc ann
-prettyAST_ e = snd (go 0 initPrec e)
+prettyAST_ e = snd $ go 0 initPrec e
   where go :: Int -> Rational -> AST env ty -> (Int, Doc ann)
         go i _ (IntE n)  = (i, pretty n)
         go i _ (BoolE b) = (i, pretty b)
@@ -93,14 +87,27 @@ prettyAST_ e = snd (go 0 initPrec e)
           pretty "fix" <+> snd (go i initPrec body))
         go i prec (Cond c e1 e2) =
           (i, maybeParens (prec >= ifPrec) $ fillSep
-            [ pretty "if" <+> snd (go i initPrec c)
+            [ pretty "if"   <+> snd (go i initPrec c)
             , pretty "then" <+> snd (go i initPrec e1)
             , pretty "else" <+> snd (go i initPrec e2)
             ])
-        go i prec (PrimBinOp e1 op e2) = (i, maybeParens (prec >= binOpPrec op) $
-          snd (go i (binOpLeftPrec op) e1) <+> pretty op
+        go i prec (PrimBinOp e1 op e2) = (i, maybeParens (prec >= binOpPrec op)
+          $ snd (go i (binOpLeftPrec op) e1)
+            <+> pretty op
             <+> snd (go i (binOpRightPrec op) e2))
         go i prec (PrimOp op arg) = (i, maybeParens (prec >= opPrec op) $
           pretty op <> snd (go i (opPrecArg op) arg))
         go i _ (Pair f s) = (i, sGuillemetsOut $
           snd (go i initPrec f) <> comma <> snd (go i initPrec s))
+
+-------------------------------------------------------------------------------
+-- * Helper functions
+-------------------------------------------------------------------------------
+
+-- |Helper function that defines let expressions
+letE :: SingI arg => AST env arg -> AST (arg :> env) res -> AST env res
+letE e1 e2 = App (Lambda sing e2) e1
+
+-- |Helper function that defines recursive let expressions
+letrecE :: SingI arg => AST (arg :> env) arg -> AST (arg :> env) res -> AST env res
+letrecE e1 e2 = App (Lambda sing e2) (Fix (Lambda sing e1))

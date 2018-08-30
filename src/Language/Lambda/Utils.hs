@@ -20,12 +20,12 @@ import Data.Text.Prettyprint.Doc
 import Language.Lambda.Types
 
 initPrec, lambdaPrec, appPrec, appLeftPrec, appRightPrec, ifPrec :: Rational
-initPrec = 0
-lambdaPrec = 1
-appPrec = 9
-appLeftPrec = 8.9
+initPrec     = 0
+lambdaPrec   = 1
+appPrec      = 9
+appLeftPrec  = 8.9
 appRightPrec = 9
-ifPrec = 1
+ifPrec       = 1
 
 binOpPrecs :: BinOp arg res -> (Rational, Rational, Rational)
 binOpPrecs PrimAdd    = (5, 4.9, 5)
@@ -53,5 +53,5 @@ binOpLeftPrec  (binOpPrecs -> (_, x, _)) = x
 binOpRightPrec (binOpPrecs -> (_, _, x)) = x
 
 maybeParens :: Bool -> Doc ann -> Doc ann
-maybeParens True = parens
+maybeParens True  = parens
 maybeParens False = id

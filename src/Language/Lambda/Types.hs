@@ -18,8 +18,7 @@
 -------------------------------------------------------------------------------
 
 module Language.Lambda.Types
-  ( -- * Types
-    LType(..)
+  ( LType(..)
   , Op(..)
   , BinOp(..)
   , SLType(..)
@@ -29,6 +28,10 @@ import Data.Kind
 import Data.Text.Prettyprint.Doc
 
 import Language.Lambda.Data.Singletons
+
+-------------------------------------------------------------------------------
+-- * Types
+-------------------------------------------------------------------------------
 
 -- | Types of the Lambda language
 data LType = LInt | LBool | LFun LType LType | LPair LType LType
@@ -73,6 +76,10 @@ instance Pretty (BinOp arg res) where
   pretty PrimAnd    = pretty '∧'
   pretty PrimOr     = pretty '∨'
 
+-------------------------------------------------------------------------------
+-- * Singletons
+-------------------------------------------------------------------------------
+
 -- | Singletons for 'LType'
 data SLType :: LType -> Type where
   SLInt     :: SLType LInt
@@ -86,7 +93,7 @@ instance Pretty (SLType t) where
   pretty SLInt           = pretty "int"
   pretty SLBool          = pretty "bool"
   pretty (SLFun arg res) = pretty arg <+> pretty "->" <+> pretty res
-  pretty (SLPair f s)    = pretty f <+> pretty '×' <+> pretty s
+  pretty (SLPair f s)    = pretty f   <+> pretty '×'  <+> pretty s
 
 instance SingKind LType where
   type Sing = SLType
