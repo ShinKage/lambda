@@ -1,0 +1,100 @@
+\chapter{Big-step semantics}
+
+\begin{prooftree*}
+    \infer0[\scshape SemInt]{\mCons{IntE}{v} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \infer0[\scshape SemBool]{\mCons{BoolE}{v} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \infer0[\scshape SemUnit]{\sCons{UnitE} \Downarrow ()}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow v_1}
+  \hypo{e_2 \Downarrow v_2}
+  \infer2[\scshape SemProduct]{\mCons{Pair}{e_1 \; e_2} \Downarrow (v_1,v_2)}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e \Downarrow v}
+  \infer1[\scshape SemCoProductLeft]{\mCons{LeftE}{e} \Downarrow \mCons{Left}{v}}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e \Downarrow v}
+  \infer1[\scshape SemCoProductRight]{\mCons{RightE}{e} \Downarrow \mCons{Right}{v}}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \infer0[\scshape SemLambda]{\mCons{Lambda}{\_ \; e} \Downarrow v \to [\sfrac{v}{x}]e}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow f: a \to [\sfrac{a}{x}]e}
+  \hypo{e_2 \Downarrow v_2}
+  \hypo{f \; v_2 \Downarrow v}
+  \infer3[\scshape SemApp]{\mCons{App}{e_1 \; e_2} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e \Downarrow f: a \to [\sfrac{a}{x}]e'}
+  \hypo{f \; (\mCons{Fix}{e}) \Downarrow v}
+  \infer2[\scshape SemFix]{\mCons{Fix}{e} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow v_1}
+  \hypo{e_2 \Downarrow v_2}
+  \hypo{\mCons{binop}{v_1 \; v_2} = v}
+  \infer3[\scshape SemPrimBinOp]{\mCons{binop}{e_1 \; e_2} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e \Downarrow v}
+  \hypo{\mCons{op}{v} = v'}
+  \infer2[\scshape SemPrimOp]{\mCons{op}{e} \Downarrow v'}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow \sCons{True}}
+  \hypo{e_2 \Downarrow v}
+  \infer2[\scshape SemCondTrue]{\mCons{Cond}{e_1 \; e_2 \; e_3} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow \sCons{False}}
+  \hypo{e_3 \Downarrow v}
+  \infer2[\scshape SemCondFalse]{\mCons{Cond}{e_1 \; e_2 \; e_3} \Downarrow v}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow \mCons{Left}{v}}
+  \hypo{e_2 \Downarrow f : a \to [\sfrac{a}{x}]e_2'}
+  \hypo{f \; v \Downarrow v'}
+  \infer3[\scshape SemCaseLeft]{\mCons{Case}{e_1 \; e_2 \; e_3} \Downarrow v'}
+\end{prooftree*}
+
+\begin{prooftree*}
+  \hypo{e_1 \Downarrow \mCons{Right}{v}}
+  \hypo{e_3 \Downarrow f : a \to [\sfrac{a}{x}]e_3'}
+  \hypo{f \; v \Downarrow v'}
+  \infer3[\scshape SemCaseRight]{\mCons{Case}{e_1 \; e_2 \; e_3} \Downarrow v'}
+\end{prooftree*}
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}[t]{ll}
+    Lambda      & Haskell    \\
+    \midrule
+    LInt        & Int        \\
+    LBool       & Bool       \\
+    LUnit       & ()         \\
+    LPair a b   & (a, b)     \\
+    LEither a b & Either a b \\
+    LFun        & AST -> AST \\
+  \end{tabular}
+  \caption{Concrete Haskell representation of Lambda types.}
+\end{table}

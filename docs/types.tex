@@ -1,0 +1,116 @@
+\chapter{Typing rules}
+
+% ===== INT =====
+\begin{prooftree*}
+  \hypo{n \in \mathbb{Z}}
+  \infer1[\scshape TyInt]{\Gamma \vdash \mCons{IntE}{n} : \sType{LInt}}
+\end{prooftree*}
+
+% ===== BOOL =====
+\begin{prooftree*}
+  \hypo{b \in \mathbb{B}}
+  \infer1[\scshape TyBool]{\Gamma \vdash \mCons{BoolE}{b} : \sType{LBool}}
+\end{prooftree*}
+
+% ===== UNIT =====
+\begin{prooftree*}
+    \infer0[\scshape TyUnit]{\Gamma \vdash \sCons{UnitE} : \sType{LUnit}}
+\end{prooftree*}
+
+% ===== PRODUCT =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e_1 : \tau_1}
+  \hypo{\Gamma \vdash e_2 : \tau_2}
+  \infer2[\scshape TyProduct]{\Gamma \vdash \mCons{Pair}{e_1 \; e_2} : \mType{LPair}{\tau_1 \; \tau_2}}
+\end{prooftree*}
+
+% ===== COPRODUCT =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e : \tau_1}
+  \infer1[\scshape TyCoProductLeft]{\Gamma \vdash \mCons{LeftE}{e} : \mType{LEither}{\tau_1 \; \tau_2}}
+\end{prooftree*}
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e : \tau_2}
+  \infer1[\scshape TyCoProductRight]{\Gamma \vdash \mCons{RightE}{e} : \mType{LEither}{\tau_1 \; \tau_2}}
+\end{prooftree*}
+
+% ===== VAR =====
+\begin{prooftree*}
+  \hypo{x : \tau \in \Gamma}
+  \infer1[\scshape TyVar]{\Gamma \vdash \mCons{Var}{x} : \tau}
+\end{prooftree*}
+
+% ===== LAMBDA =====
+\begin{prooftree*}
+  \hypo{\Gamma,x : \tau_1 \vdash e : \tau_2}
+  \infer1[\scshape TyLambda]{\Gamma \vdash \mCons{Lambda}{[\tau_1] \; e} : \mType{LFun}{\tau_1 \; \tau_2}}
+\end{prooftree*}
+
+% ===== APP =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e_1 : \mType{LFun}{\tau_1 \; \tau_2}}
+  \hypo{\Gamma \vdash e_2 : \tau_1}
+  \infer2[\scshape TyApp]{\Gamma \vdash \mCons{App}{e_1 \; e_2} : \tau_2}
+\end{prooftree*}
+
+% ===== FIX =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e : \mType{LFun}{\tau \; \tau}}
+  \infer1[\scshape TyFix]{\Gamma \vdash \mCons{Fix}{e} : \tau}
+\end{prooftree*}
+
+% ===== PRIMBINOP =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e_1 : \tau_1}
+  \hypo{\Gamma \vdash e_2 : \tau_1}
+  \infer2[\scshape TyPrimBinOp]{\Gamma \vdash \mCons{binop}{e_1 \; e_2} : \tau_2}
+\end{prooftree*}
+
+% ===== PRIMOP =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e : \tau_1}
+  \infer1[\scshape TyPrimOp]{\Gamma \vdash \mCons{op}{e} : \tau_2}
+\end{prooftree*}
+
+% ===== COND =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e_1 : \sType{LBool}}
+  \hypo{\Gamma \vdash e_2 : \tau}
+  \hypo{\Gamma \vdash e_3 : \tau}
+  \infer3[\scshape TyCond]{\Gamma \vdash \mCons{Cond}{e_1 \; e_2 \; e_3} : \tau}
+\end{prooftree*}
+
+% ===== CASE =====
+\begin{prooftree*}
+  \hypo{\Gamma \vdash e_1 : \mType{LEither}{\tau_1 \; \tau_2}}
+  \hypo{\Gamma \vdash e_2 : \mType{LFun}{\tau_1 \; \tau_3}}
+  \hypo{\Gamma \vdash e_3 : \mType{LFun}{\tau_2 \; \tau_3}}
+  \infer3[\scshape TyCase]{\Gamma \vdash \mCons{Case}{e_1 \; e_2 \; e_3}: \tau_3}
+\end{prooftree*}
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}[t]{lll}
+    binop      & $\tau_1$ & $\tau_2$ \\
+    \midrule
+    PrimAdd    & LInt     & LInt     \\
+    PrimSub    & LInt     & LInt     \\
+    PrimMul    & LInt     & LInt     \\
+    PrimDiv    & LInt     & LInt     \\
+    PrimIntEq  & LInt     & LBool    \\
+    PrimBoolEq & LBool    & LBool    \\
+    PrimAnd    & LBool    & LBool    \\
+    PrimOr     & LBool    & LBool    \\
+  \end{tabular}
+  \quad
+  \centering
+  \begin{tabular}[t]{lll}
+    op      & $\tau_1$  & $\tau_2$ \\
+    \midrule
+    PrimNeg & LInt      & LInt     \\
+    PrimNot & LBool     & LBool    \\
+    PrimFst & LPair a b & a        \\
+    PrimSnd & LPair a b & b        \\
+  \end{tabular}
+  \caption{Arguments and result types of primitive functions.}
+\end{table}
