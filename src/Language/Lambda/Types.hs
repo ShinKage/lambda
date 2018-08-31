@@ -34,7 +34,13 @@ import Language.Lambda.Data.Singletons
 -------------------------------------------------------------------------------
 
 -- | Types of the Lambda language
-data LType = LInt | LBool | LFun LType LType | LPair LType LType
+data LType = LInt
+           | LBool
+           | LUnit
+           | LVoid
+           | LFun    LType LType
+           | LPair   LType LType
+           | LEither LType LType
   deriving Show
 
 -- | Primitive unary operations, indexed by argument and result type.
@@ -84,24 +90,33 @@ instance Pretty (BinOp arg res) where
 data SLType :: LType -> Type where
   SLInt     :: SLType LInt
   SLBool    :: SLType LBool
+  SLUnit    :: SLType LUnit
+  SLVoid    :: SLType LVoid
   SLFun     :: SLType arg -> SLType res -> SLType (LFun arg res)
   SLPair    :: SLType f   -> SLType s   -> SLType (LPair f s)
+  SLEither  :: SLType l   -> SLType r   -> SLType (LEither l r)
 
 deriving instance Show (SLType t)
 
 instance Pretty (SLType t) where
   pretty SLInt           = pretty "int"
   pretty SLBool          = pretty "bool"
+  pretty SLUnit          = pretty "unit"
+  pretty SLVoid          = pretty "void"
   pretty (SLFun arg res) = pretty arg <+> pretty "->" <+> pretty res
   pretty (SLPair f s)    = pretty f   <+> pretty '×'  <+> pretty s
+  pretty (SLEither l r)  = pretty l   <+> pretty '⊕'  <+> pretty r
 
 instance SingKind LType where
   type Sing = SLType
 
   fromSing SLInt           = LInt
   fromSing SLBool          = LBool
-  fromSing (SLFun arg res) = LFun (fromSing arg) (fromSing res)
-  fromSing (SLPair f s)    = LPair (fromSing f) (fromSing s)
+  fromSing SLUnit          = LUnit
+  fromSing SLVoid          = LVoid
+  fromSing (SLFun arg res) = LFun    (fromSing arg) (fromSing res)
+  fromSing (SLPair f s)    = LPair   (fromSing f)   (fromSing s)
+  fromSing (SLEither l r)  = LEither (fromSing l)   (fromSing r)
 
 instance SingI LInt where
   sing = SLInt
@@ -109,8 +124,17 @@ instance SingI LInt where
 instance SingI LBool where
   sing = SLBool
 
+instance SingI LUnit where
+  sing = SLUnit
+
+instance SingI LVoid where
+  sing = SLVoid
+
 instance (SingI arg, SingI res) => SingI (LFun arg res) where
   sing = SLFun sing sing
 
 instance (SingI f, SingI s) => SingI (LPair f s) where
   sing = SLPair sing sing
+
+instance (SingI l, SingI r) => SingI (LEither l r) where
+  sing = SLEither sing sing

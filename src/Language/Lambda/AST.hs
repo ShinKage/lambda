@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PolyKinds #-}
@@ -21,6 +20,8 @@
 
 module Language.Lambda.AST
   ( AST(..)
+  , expType
+  , lambda
   , letE
   , letrecE
   ) where
@@ -46,23 +47,31 @@ data AST :: forall n. Vec LType n -> LType -> Type where
   IntE      :: Int -> AST env LInt
   -- | A boolean literal.
   BoolE     :: Bool -> AST env LBool
+  -- | Unit literal.
+  UnitE     :: AST env LUnit
   -- | Lambda expressions with explicit type, can be inferred thanks to 'SingI'
   -- instance.
-  Lambda    :: SLType arg -> AST (arg :> env) res -> AST env (LFun arg res)
+  Lambda    :: SLType a -> AST (a :> env) b -> AST env (LFun a b)
   -- | Variable with De Brujin indexes.
-  Var       :: Elem env ty -> AST env ty
+  Var       :: Elem env a -> AST env a
   -- | Lambda application.
-  App       :: AST env (LFun arg res) -> AST env arg -> AST env res
+  App       :: AST env (LFun a b) -> AST env a -> AST env b
   -- | Fix operator, defines recursive functions.
-  Fix       :: AST env (LFun ty ty) -> AST env ty
+  Fix       :: AST env (LFun a a) -> AST env a
   -- | Conditional expressions, all branches must have the same return type.
-  Cond      :: AST env LBool -> AST env ty -> AST env ty -> AST env ty
+  Cond      :: AST env LBool -> AST env a -> AST env a -> AST env a
   -- | Primitives binary operations.
-  PrimBinOp :: AST env arg -> BinOp arg res -> AST env arg -> AST env res
+  PrimBinOp :: AST env a -> BinOp a b -> AST env a -> AST env b
   -- | Primitives unary operations.
   PrimOp    :: Op arg res -> AST env arg -> AST env res
   -- | Build a pair of expressions.
-  Pair      :: AST env ty1 -> AST env ty2 -> AST env (LPair ty1 ty2)
+  Pair      :: AST env a -> AST env b -> AST env (LPair a b)
+  -- | Build the left branch of a sum type.
+  LeftE     :: AST env a -> AST env (LEither a b)
+  -- | Build the right branch of a sum type.
+  RightE    :: AST env b -> AST env (LEither a b)
+  -- | Pattern matching on sum type.
+  Case      :: AST env (LEither a b) -> AST env (LFun a c) -> AST env (LFun b c) -> AST env c
 
 deriving instance Show (AST env ty)
 
@@ -74,6 +83,7 @@ prettyAST_ e = snd $ go 0 initPrec e
   where go :: Int -> Rational -> AST env ty -> (Int, Doc ann)
         go i _ (IntE n)  = (i, pretty n)
         go i _ (BoolE b) = (i, pretty b)
+        go i _ UnitE = (i, pretty "unit")
         go i prec (Lambda ty body) = case go i initPrec body of
           (i_body, doc_body) -> (i + 1, maybeParens (prec >= lambdaPrec) $
             fillSep [ pretty 'λ' <> pretty '#' <> pretty i_body <> pretty ':'
@@ -99,15 +109,32 @@ prettyAST_ e = snd $ go 0 initPrec e
           pretty op <> snd (go i (opPrecArg op) arg))
         go i _ (Pair f s) = (i, sGuillemetsOut $
           snd (go i initPrec f) <> comma <> snd (go i initPrec s))
+        go i prec (LeftE l) = (i, maybeParens (prec >= leftPrec) $
+          pretty "Left" <+> snd (go i initPrec l))
+        go i prec (RightE r) = (i, maybeParens (prec >= rightPrec) $
+          pretty "Right" <+> snd (go i initPrec r))
+        go i prec (Case v l r) = (i, maybeParens (prec >= casePrec) $
+          vsep [ pretty "case" <+> snd (go i initPrec v) <+> pretty "of"
+               , pretty "Left ->" <+> snd (go i initPrec l)
+               , pretty "Right ->" <+> snd (go i initPrec r)
+               ])
 
 -------------------------------------------------------------------------------
 -- * Helper functions
 -------------------------------------------------------------------------------
 
+-- AST env a -> a
+expType :: SingI a => AST VNil a -> SLType a
+expType _ = sing
+
+-- |Defines lambda with type argument passed implicitly
+lambda :: SingI a => AST (a :> env) b -> AST env (LFun a b)
+lambda = Lambda sing
+
 -- |Helper function that defines let expressions
-letE :: SingI arg => AST env arg -> AST (arg :> env) res -> AST env res
+letE :: SingI a => AST env a -> AST (a :> env) b -> AST env b
 letE e1 e2 = App (Lambda sing e2) e1
 
 -- |Helper function that defines recursive let expressions
-letrecE :: SingI arg => AST (arg :> env) arg -> AST (arg :> env) res -> AST env res
+letrecE :: SingI a => AST (a :> env) a -> AST (a :> env) b -> AST env b
 letrecE e1 e2 = App (Lambda sing e2) (Fix (Lambda sing e1))

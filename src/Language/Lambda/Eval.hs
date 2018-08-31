@@ -37,8 +37,10 @@ import Language.Lambda.Data.Vec
 type family Concrete (t :: LType) :: Type where
   Concrete LInt           = Int
   Concrete LBool          = Bool
-  Concrete (LFun arg res) = AST VNil arg -> AST VNil res
-  Concrete (LPair f s)    = (Concrete f, Concrete s)
+  Concrete LUnit          = ()
+  Concrete (LFun a b)     = AST VNil a -> AST VNil b
+  Concrete (LPair a b)    = (Concrete a, Concrete b)
+  Concrete (LEither a b)  = Either (Concrete a) (Concrete b)
 
 -------------------------------------------------------------------------------
 -- * Big-step evaluation
@@ -49,6 +51,7 @@ type family Concrete (t :: LType) :: Type where
 eval :: AST VNil a -> Concrete a
 eval (IntE i)             = i
 eval (BoolE b)            = b
+eval UnitE                = ()
 eval (Lambda _ body)      = \arg -> subst arg body
 eval (Var v)              = case v of {}
 eval (App body arg)       = eval (eval body arg)
@@ -57,6 +60,15 @@ eval (Cond c e1 e2)       = if eval c then eval e1 else eval e2
 eval (PrimBinOp e1 op e2) = evalBinOp op (eval e1) (eval e2)
 eval (PrimOp op arg)      = evalOp op (eval arg)
 eval (Pair f s)           = (eval f, eval s)
+eval (LeftE l)            = Left $ eval l
+eval (RightE r)           = Right $ eval r
+eval (Case (LeftE e) f _) = eval (App f e)
+eval (Case (RightE e) _ f) = eval (App f e)
+eval (Case e lfun rfun) = case step e of
+  StepAST (LeftE l) -> eval (App lfun l)
+  StepAST (RightE r) -> eval (App rfun r)
+  StepAST e' -> eval (Case e' lfun rfun)
+  _ -> undefined
 
 evalBinOp :: BinOp a b -> Concrete a -> Concrete a -> Concrete b
 evalBinOp PrimAdd    = (+)
@@ -92,6 +104,7 @@ instance Pretty (Step a) where
 step :: AST VNil a -> Step a
 step e@(IntE i) = StepValue e i
 step e@(BoolE b) = StepValue e b
+step UnitE = StepValue UnitE ()
 step e@(Lambda _ body) = StepValue e $ \arg -> subst arg body
 step (Var v) = case v of {}
 step (App body arg) = case step body of
@@ -118,6 +131,22 @@ step (Pair f s) = case step f of
   StepValue ef f' -> case step s of
     StepAST s'      -> StepAST (Pair ef s')
     StepValue es s' -> StepValue (Pair ef es) (f', s')
+step (LeftE l) = case step l of
+  StepAST l'      -> StepAST (LeftE l')
+  StepValue el l' -> StepValue (LeftE el) (Left l')
+step (RightE r) = case step r of
+  StepAST r'      -> StepAST (RightE r')
+  StepValue er r' -> StepValue (RightE er) (Right r')
+step (Case c lf rf) = case step c of
+  StepAST c' -> StepAST (Case c' lf rf)
+  StepValue ec _ -> case step lf of
+    StepAST lf' -> StepAST (Case ec lf' rf)
+    StepValue el _ -> case step rf of
+      StepAST rf' -> StepAST (Case ec el rf')
+      StepValue er _ -> case ec of
+        LeftE l -> StepAST (App el l)
+        RightE r -> StepAST (App er r)
+        _ -> undefined
 
 -- | Fully evaluates a closed expression saving in a list all the intermediates
 -- expressions or values.
@@ -157,6 +186,7 @@ subst e = go LZero
            -> AST (locals +++ env) t
         go _   (IntE n)             = IntE n
         go _   (BoolE b)            = BoolE b
+        go _   UnitE                = UnitE
         go len (Lambda ty body)     = Lambda ty (go (LSucc len) body)
         go len (Var v)              = substVar len v
         go len (App body arg)       = App (go len body) (go len arg)
@@ -165,6 +195,9 @@ subst e = go LZero
         go len (PrimBinOp e1 op e2) = PrimBinOp (go len e1) op (go len e2)
         go len (PrimOp op arg)      = PrimOp op (go len arg)
         go len (Pair f s)           = Pair (go len f) (go len s)
+        go len (LeftE l)            = LeftE (go len l)
+        go len (RightE l)           = RightE (go len l)
+        go len (Case c l r)         = Case (go len c) (go len l) (go len r)
 
         substVar :: Length (locals :: Vec LType n)
                  -> Elem (locals +++ sub :> env) t
@@ -186,6 +219,7 @@ shifts prefix = go LZero
            -> AST (locals +++ prefix +++ env) t
         go _   (IntE n)               = IntE n
         go _   (BoolE b)              = BoolE b
+        go _   UnitE                  = UnitE
         go len (Lambda ty body)       = Lambda ty (go (LSucc len) body)
         go len (Var v)                = Var (shiftsVar len v)
         go len (App body arg)         = App (go len body) (go len arg)
@@ -194,6 +228,9 @@ shifts prefix = go LZero
         go len (PrimBinOp lhs op rhs) = PrimBinOp (go len lhs) op (go len rhs)
         go len (PrimOp op arg)        = PrimOp op (go len arg)
         go len (Pair f s)             = Pair (go len f) (go len s)
+        go len (LeftE l)              = LeftE (go len l)
+        go len (RightE l)             = RightE (go len l)
+        go len (Case c l r)         = Case (go len c) (go len l) (go len r)
 
         shiftsVar :: Length (locals :: Vec LType n)
                   -> Elem (locals +++ env) t

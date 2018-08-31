@@ -57,3 +57,15 @@ negFst = Lambda sing (PrimOp PrimNeg (PrimOp PrimFst (Var EZero)))
 
 test :: AST VNil LInt
 test = letE (IntE 5) (PrimBinOp (Var EZero) PrimMul (IntE 2))
+
+
+type LMaybe a = LEither a LUnit
+type LReader r a = LFun r a
+type LWriter w a = LPair a w
+type LState s a = LReader s (LWriter s a)
+
+just :: SingI a => AST VNil a -> AST VNil (LMaybe a)
+just = LeftE
+
+nothing :: SingI a => AST VNil (LMaybe a)
+nothing = RightE UnitE
