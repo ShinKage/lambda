@@ -37,18 +37,18 @@ import Language.Lambda.Data.Singletons
 data LType = LInt
            | LBool
            | LUnit
-           | LVoid
-           | LFun    LType LType
-           | LPair   LType LType
-           | LEither LType LType
+           | LBottom
+           | LProduct LType LType
+           | LSum     LType LType
+           | LArrow   LType LType
   deriving Show
 
 -- | Primitive unary operations, indexed by argument and result type.
 data Op :: LType -> LType -> Type where
-  PrimNeg :: Op LInt        LInt
-  PrimNot :: Op LBool       LBool
-  PrimFst :: Op (LPair f s) f
-  PrimSnd :: Op (LPair f s) s
+  PrimNeg :: Op LInt            LInt
+  PrimNot :: Op LBool           LBool
+  PrimFst :: Op (LProduct a b)  a
+  PrimSnd :: Op (LProduct a b)  b
 
 deriving instance Show (Op arg res)
 
@@ -91,21 +91,21 @@ data SLType :: LType -> Type where
   SLInt     :: SLType LInt
   SLBool    :: SLType LBool
   SLUnit    :: SLType LUnit
-  SLVoid    :: SLType LVoid
-  SLFun     :: SLType arg -> SLType res -> SLType (LFun arg res)
-  SLPair    :: SLType f   -> SLType s   -> SLType (LPair f s)
-  SLEither  :: SLType l   -> SLType r   -> SLType (LEither l r)
+  SLBottom  :: SLType LBottom
+  SLArrow   :: SLType a -> SLType b -> SLType (LArrow a b)
+  SLProduct :: SLType a -> SLType b -> SLType (LProduct a b)
+  SLSum     :: SLType a -> SLType b -> SLType (LSum a b)
 
 deriving instance Show (SLType t)
 
 instance Pretty (SLType t) where
   pretty SLInt           = pretty "int"
   pretty SLBool          = pretty "bool"
-  pretty SLUnit          = pretty "unit"
-  pretty SLVoid          = pretty "void"
-  pretty (SLFun arg res) = pretty arg <+> pretty "->" <+> pretty res
-  pretty (SLPair f s)    = pretty f   <+> pretty '×'  <+> pretty s
-  pretty (SLEither l r)  = pretty l   <+> pretty '⊕'  <+> pretty r
+  pretty SLUnit          = pretty "()"
+  pretty SLBottom        = pretty "⊥"
+  pretty (SLArrow a b)   = pretty a <+> pretty "->" <+> pretty b
+  pretty (SLProduct a b) = pretty a <+> pretty "×"  <+> pretty b
+  pretty (SLSum a b)     = pretty a <+> pretty "⊕"  <+> pretty b
 
 instance SingKind LType where
   type Sing = SLType
@@ -113,10 +113,10 @@ instance SingKind LType where
   fromSing SLInt           = LInt
   fromSing SLBool          = LBool
   fromSing SLUnit          = LUnit
-  fromSing SLVoid          = LVoid
-  fromSing (SLFun arg res) = LFun    (fromSing arg) (fromSing res)
-  fromSing (SLPair f s)    = LPair   (fromSing f)   (fromSing s)
-  fromSing (SLEither l r)  = LEither (fromSing l)   (fromSing r)
+  fromSing SLBottom        = LBottom
+  fromSing (SLArrow a b)   = LArrow   (fromSing a) (fromSing b)
+  fromSing (SLProduct a b) = LProduct (fromSing a) (fromSing b)
+  fromSing (SLSum a b)     = LSum     (fromSing a) (fromSing b)
 
 instance SingI LInt where
   sing = SLInt
@@ -127,14 +127,14 @@ instance SingI LBool where
 instance SingI LUnit where
   sing = SLUnit
 
-instance SingI LVoid where
-  sing = SLVoid
+instance SingI LBottom where
+  sing = SLBottom
 
-instance (SingI arg, SingI res) => SingI (LFun arg res) where
-  sing = SLFun sing sing
+instance (SingI a, SingI b) => SingI (LArrow a b) where
+  sing = SLArrow sing sing
 
-instance (SingI f, SingI s) => SingI (LPair f s) where
-  sing = SLPair sing sing
+instance (SingI a, SingI b) => SingI (LProduct a b) where
+  sing = SLProduct sing sing
 
-instance (SingI l, SingI r) => SingI (LEither l r) where
-  sing = SLEither sing sing
+instance (SingI a, SingI b) => SingI (LSum a b) where
+  sing = SLSum sing sing

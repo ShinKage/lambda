@@ -2,15 +2,15 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2207a1a3e89e78303aacc82bb0a2d913586c8c6f8fe213cd8ea3cc7a0bb6a92c
+-- hash: 2266dc0cb7480faf762db10f107dbf3d1f1054b620b6bd7c54b8bde26fe54b6f
 
 name:           lambda
 version:        0.1.0.0
 synopsis:       Toy language with GADTs.
 description:    Please see the README
 category:       Language
-homepage:       https://github.com/https://github.com/ShinKage/lambda#readme
-bug-reports:    https://github.com/https://github.com/ShinKage/lambda/issues
+homepage:       https://github.com/ShinKage/lambda#readme
+bug-reports:    https://github.com/ShinKage/lambda/issues
 author:         Giuseppe Lomurno
 maintainer:     lomurno.giuseppe97@gmail.com
 copyright:      MIT
@@ -21,7 +21,7 @@ cabal-version:  >= 1.10
 
 source-repository head
   type: git
-  location: https://github.com/https://github.com/ShinKage/lambda
+  location: https://github.com/ShinKage/lambda
 
 library
   exposed-modules:

@@ -38,9 +38,9 @@ type family Concrete (t :: LType) :: Type where
   Concrete LInt           = Int
   Concrete LBool          = Bool
   Concrete LUnit          = ()
-  Concrete (LFun a b)     = AST VNil a -> AST VNil b
-  Concrete (LPair a b)    = (Concrete a, Concrete b)
-  Concrete (LEither a b)  = Either (Concrete a) (Concrete b)
+  Concrete (LArrow a b)   = AST VNil a -> AST VNil b
+  Concrete (LProduct a b) = (Concrete a, Concrete b)
+  Concrete (LSum a b)     = Either (Concrete a) (Concrete b)
 
 -------------------------------------------------------------------------------
 -- * Big-step evaluation
@@ -176,7 +176,7 @@ stepOp _ _ _ = undefined
 -- * Helper functions
 -------------------------------------------------------------------------------
 
-unfix :: AST VNil (LFun a a) -> Concrete (LFun a a) -> AST VNil a
+unfix :: AST VNil (LArrow a a) -> Concrete (LArrow a a) -> AST VNil a
 unfix lam v = v $ Fix lam
 
 subst :: forall env sub res. AST env sub -> AST (sub :> env) res -> AST env res

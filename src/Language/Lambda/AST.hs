@@ -51,13 +51,13 @@ data AST :: forall n. Vec LType n -> LType -> Type where
   UnitE     :: AST env LUnit
   -- | Lambda expressions with explicit type, can be inferred thanks to 'SingI'
   -- instance.
-  Lambda    :: SLType a -> AST (a :> env) b -> AST env (LFun a b)
+  Lambda    :: SLType a -> AST (a :> env) b -> AST env (LArrow a b)
   -- | Variable with De Brujin indexes.
   Var       :: Elem env a -> AST env a
   -- | Lambda application.
-  App       :: AST env (LFun a b) -> AST env a -> AST env b
+  App       :: AST env (LArrow a b) -> AST env a -> AST env b
   -- | Fix operator, defines recursive functions.
-  Fix       :: AST env (LFun a a) -> AST env a
+  Fix       :: AST env (LArrow a a) -> AST env a
   -- | Conditional expressions, all branches must have the same return type.
   Cond      :: AST env LBool -> AST env a -> AST env a -> AST env a
   -- | Primitives binary operations.
@@ -65,13 +65,13 @@ data AST :: forall n. Vec LType n -> LType -> Type where
   -- | Primitives unary operations.
   PrimOp    :: Op arg res -> AST env arg -> AST env res
   -- | Build a pair of expressions.
-  Pair      :: AST env a -> AST env b -> AST env (LPair a b)
+  Pair      :: AST env a -> AST env b -> AST env (LProduct a b)
   -- | Build the left branch of a sum type.
-  LeftE     :: AST env a -> AST env (LEither a b)
+  LeftE     :: AST env a -> AST env (LSum a b)
   -- | Build the right branch of a sum type.
-  RightE    :: AST env b -> AST env (LEither a b)
+  RightE    :: AST env b -> AST env (LSum a b)
   -- | Pattern matching on sum type.
-  Case      :: AST env (LEither a b) -> AST env (LFun a c) -> AST env (LFun b c) -> AST env c
+  Case      :: AST env (LSum a b) -> AST env (LArrow a c) -> AST env (LArrow b c) -> AST env c
 
 deriving instance Show (AST env ty)
 
@@ -128,7 +128,7 @@ expType :: SingI a => AST VNil a -> SLType a
 expType _ = sing
 
 -- |Defines lambda with type argument passed implicitly
-lambda :: SingI a => AST (a :> env) b -> AST env (LFun a b)
+lambda :: SingI a => AST (a :> env) b -> AST env (LArrow a b)
 lambda = Lambda sing
 
 -- |Helper function that defines let expressions

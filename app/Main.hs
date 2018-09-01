@@ -15,7 +15,7 @@ import Language.Lambda.Data.Vec
 main :: IO ()
 main = print . vsep . intersperse line . fmap pretty . stepDescent $ App factorial (IntE 5)
 
-factorial :: AST VNil (LFun LInt LInt)
+factorial :: AST VNil (LArrow LInt LInt)
 factorial = Fix fact
   where fact = Lambda sing (Lambda sing
                 (Cond
@@ -29,7 +29,7 @@ factorial = Fix fact
                   )
                 ))
 
-fibonacci :: AST VNil (LFun LInt LInt)
+fibonacci :: AST VNil (LArrow LInt LInt)
 fibonacci = Fix fib
   where fib = Lambda sing (Lambda sing
                 (Cond
@@ -52,16 +52,16 @@ fibonacci = Fix fib
                   )
                 ))
 
-negFst :: SingI s => AST VNil (LFun (LPair LInt s) LInt)
+negFst :: SingI s => AST VNil (LArrow (LProduct LInt s) LInt)
 negFst = Lambda sing (PrimOp PrimNeg (PrimOp PrimFst (Var EZero)))
 
 test :: AST VNil LInt
 test = letE (IntE 5) (PrimBinOp (Var EZero) PrimMul (IntE 2))
 
 
-type LMaybe a = LEither a LUnit
-type LReader r a = LFun r a
-type LWriter w a = LPair a w
+type LMaybe a = LSum a LUnit
+type LReader r a = LArrow r a
+type LWriter w a = LProduct a w
 type LState s a = LReader s (LWriter s a)
 
 just :: SingI a => AST VNil a -> AST VNil (LMaybe a)

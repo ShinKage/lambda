@@ -21,17 +21,17 @@
 \begin{prooftree*}
   \hypo{\Gamma \vdash e_1 : \tau_1}
   \hypo{\Gamma \vdash e_2 : \tau_2}
-  \infer2[\scshape TyProduct]{\Gamma \vdash \mCons{Pair}{e_1 \; e_2} : \mType{LPair}{\tau_1 \; \tau_2}}
+  \infer2[\scshape TyProduct]{\Gamma \vdash \mCons{Pair}{e_1 \; e_2} : \mType{LProduct}{\tau_1 \; \tau_2}}
 \end{prooftree*}
 
 % ===== COPRODUCT =====
 \begin{prooftree*}
   \hypo{\Gamma \vdash e : \tau_1}
-  \infer1[\scshape TyCoProductLeft]{\Gamma \vdash \mCons{LeftE}{e} : \mType{LEither}{\tau_1 \; \tau_2}}
+  \infer1[\scshape TyCoProductLeft]{\Gamma \vdash \mCons{LeftE}{e} : \mType{LSum}{\tau_1 \; \tau_2}}
 \end{prooftree*}
 \begin{prooftree*}
   \hypo{\Gamma \vdash e : \tau_2}
-  \infer1[\scshape TyCoProductRight]{\Gamma \vdash \mCons{RightE}{e} : \mType{LEither}{\tau_1 \; \tau_2}}
+  \infer1[\scshape TyCoProductRight]{\Gamma \vdash \mCons{RightE}{e} : \mType{LSum}{\tau_1 \; \tau_2}}
 \end{prooftree*}
 
 % ===== VAR =====
@@ -43,19 +43,19 @@
 % ===== LAMBDA =====
 \begin{prooftree*}
   \hypo{\Gamma,x : \tau_1 \vdash e : \tau_2}
-  \infer1[\scshape TyLambda]{\Gamma \vdash \mCons{Lambda}{[\tau_1] \; e} : \mType{LFun}{\tau_1 \; \tau_2}}
+  \infer1[\scshape TyLambda]{\Gamma \vdash \mCons{Lambda}{[\tau_1] \; e} : \mType{LArrow}{\tau_1 \; \tau_2}}
 \end{prooftree*}
 
 % ===== APP =====
 \begin{prooftree*}
-  \hypo{\Gamma \vdash e_1 : \mType{LFun}{\tau_1 \; \tau_2}}
+  \hypo{\Gamma \vdash e_1 : \mType{LArrow}{\tau_1 \; \tau_2}}
   \hypo{\Gamma \vdash e_2 : \tau_1}
   \infer2[\scshape TyApp]{\Gamma \vdash \mCons{App}{e_1 \; e_2} : \tau_2}
 \end{prooftree*}
 
 % ===== FIX =====
 \begin{prooftree*}
-  \hypo{\Gamma \vdash e : \mType{LFun}{\tau \; \tau}}
+  \hypo{\Gamma \vdash e : \mType{LArrow}{\tau \; \tau}}
   \infer1[\scshape TyFix]{\Gamma \vdash \mCons{Fix}{e} : \tau}
 \end{prooftree*}
 
@@ -82,9 +82,9 @@
 
 % ===== CASE =====
 \begin{prooftree*}
-  \hypo{\Gamma \vdash e_1 : \mType{LEither}{\tau_1 \; \tau_2}}
-  \hypo{\Gamma \vdash e_2 : \mType{LFun}{\tau_1 \; \tau_3}}
-  \hypo{\Gamma \vdash e_3 : \mType{LFun}{\tau_2 \; \tau_3}}
+  \hypo{\Gamma \vdash e_1 : \mType{LSum}{\tau_1 \; \tau_2}}
+  \hypo{\Gamma \vdash e_2 : \mType{LArrow}{\tau_1 \; \tau_3}}
+  \hypo{\Gamma \vdash e_3 : \mType{LArrow}{\tau_2 \; \tau_3}}
   \infer3[\scshape TyCase]{\Gamma \vdash \mCons{Case}{e_1 \; e_2 \; e_3}: \tau_3}
 \end{prooftree*}
 
@@ -109,8 +109,8 @@
     \midrule
     PrimNeg & LInt      & LInt     \\
     PrimNot & LBool     & LBool    \\
-    PrimFst & LPair a b & a        \\
-    PrimSnd & LPair a b & b        \\
+    PrimFst & LProduct a b & a        \\
+    PrimSnd & LProduct a b & b        \\
   \end{tabular}
   \caption{Arguments and result types of primitive functions.}
 \end{table}

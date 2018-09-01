@@ -1,6 +1,6 @@
 name: lambda
 version: 0.1.0.0
-github: "https://github.com/ShinKage/lambda"
+github: "ShinKage/lambda"
 license: MIT
 author: "Giuseppe Lomurno"
 maintainer: "lomurno.giuseppe97@gmail.com"

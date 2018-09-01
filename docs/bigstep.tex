@@ -89,12 +89,12 @@
   \begin{tabular}[t]{ll}
     Lambda      & Haskell    \\
     \midrule
-    LInt        & Int        \\
-    LBool       & Bool       \\
-    LUnit       & ()         \\
-    LPair a b   & (a, b)     \\
-    LEither a b & Either a b \\
-    LFun        & AST -> AST \\
+    LInt         & Int        \\
+    LBool        & Bool       \\
+    LUnit        & ()         \\
+    LProduct a b & (a, b)     \\
+    LSum a b     & Either a b \\
+    LArrow       & AST -> AST \\
   \end{tabular}
   \caption{Concrete Haskell representation of Lambda types.}
 \end{table}
