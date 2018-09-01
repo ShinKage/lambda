@@ -1,9 +1,7 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeInType #-}
 
 -------------------------------------------------------------------------------
 -- |

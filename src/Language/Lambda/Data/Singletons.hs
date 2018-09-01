@@ -1,5 +1,5 @@
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeInType #-}
 
 -------------------------------------------------------------------------------
 -- |
